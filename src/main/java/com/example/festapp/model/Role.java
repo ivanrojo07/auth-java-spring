@@ -32,4 +32,12 @@ public class Role {
         this.name = name;
     }
     
+
+    public Role() {
+        // requerido por JPA
+    }
+
+    public Role(String name) {
+        this.name = name;
+    }
 }
