@@ -1,11 +1,13 @@
 package com.example.festapp.service;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.festapp.dto.LoginRequest;
+import com.example.festapp.dto.LoginResponse;
 import com.example.festapp.dto.RegisterRequest;
 import com.example.festapp.exception.InvalidCredentialsException;
 import com.example.festapp.exception.UserAlreadyExistsException;
@@ -13,21 +15,25 @@ import com.example.festapp.model.Role;
 import com.example.festapp.model.User;
 import com.example.festapp.repository.RoleRepository;
 import com.example.festapp.repository.UserRepository;
+import com.example.festapp.security.JwtService;
 
 @Service
 public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthService(
         UserRepository userRepository,
         RoleRepository roleRepository,
-        PasswordEncoder passwordEncoder
+        PasswordEncoder passwordEncoder,
+        JwtService jwtService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public void register(RegisterRequest request) {
@@ -60,7 +66,7 @@ public class AuthService {
     }
 
 
-    public void login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
             .orElseThrow(()-> new InvalidCredentialsException("Credenciales no validas. Err 1"));
@@ -73,7 +79,15 @@ public class AuthService {
             throw new InvalidCredentialsException("Credenciales no validas. Err 3");
         }
 
-        // TODO Generar y regresar el JWT
+        // Generar y regresar el JWT
+
+        var roles = user.getRoles().stream()
+            .map(Role::getName)
+            .collect(Collectors.toList());
+
+        String token = jwtService.generateToken(user.getUsername(), roles);
+
+        return new LoginResponse(token);
         
     }
 
