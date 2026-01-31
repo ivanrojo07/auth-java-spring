@@ -5,7 +5,9 @@ import java.util.Set;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.festapp.dto.LoginRequest;
 import com.example.festapp.dto.RegisterRequest;
+import com.example.festapp.exception.InvalidCredentialsException;
 import com.example.festapp.exception.UserAlreadyExistsException;
 import com.example.festapp.model.Role;
 import com.example.festapp.model.User;
@@ -55,6 +57,24 @@ public class AuthService {
 
         // 4. Guardar el usuario
         userRepository.save(user);
+    }
+
+
+    public void login(LoginRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail())
+            .orElseThrow(()-> new InvalidCredentialsException("Credenciales no validas. Err 1"));
+
+        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Credenciales no validas. Err 2");
+        }
+
+        if(!user.isEnabled()) {
+            throw new InvalidCredentialsException("Credenciales no validas. Err 3");
+        }
+
+        // TODO Generar y regresar el JWT
+        
     }
 
 }
